@@ -2,12 +2,12 @@
     .name = .zf,
     .fingerprint = 0x30d847eef1728438,
     .description = "a commandline fuzzy finder designed for filtering filepaths",
-    .version = "0.10.3",
-    .minimum_zig_version = "0.15.2",
+    .version = "0.11.0",
+    .minimum_zig_version = "0.16.0",
     .dependencies = .{
         .vaxis = .{
-            .url = "git+https://github.com/rockorager/libvaxis#3d37f043a161fd32897ad44a2dddbfaab75faa8a",
-            .hash = "vaxis-0.5.1-BWNV_JJOCQAtdJyLvrYCKbKIhX9q3liQkKMAzujWS4HJ",
+            .url = "git+https://github.com/rockorager/libvaxis.git#c1e1f23be38951c425cdf31af455ba23ef178940",
+            .hash = "vaxis-0.6.0-BWNV_MjFCQCs9UDHiRkrgw_ayeiPkzOe4xVbaAqXkUWW",
             .lazy = true,
         },
     },
