@@ -107,11 +107,11 @@ pub const State = struct {
 
     preview: ?Previewer = null,
 
-    pub fn init(allocator: Allocator, buf: []u8, config: Config) !State {
-        const vx = try vaxis.init(allocator, .{});
+    pub fn init(io: std.Io, allocator: Allocator, env_map: *std.process.Environ.Map, buf: []u8, config: Config) !State {
+        const vx = try vaxis.init(io, allocator, env_map, .{});
 
         const preview = if (config.preview) |cmd| blk: {
-            break :blk Previewer.init(cmd);
+            break :blk try Previewer.init(allocator, env_map, cmd);
         } else null;
 
         return .{
@@ -119,7 +119,7 @@ pub const State = struct {
             .config = config,
 
             .vx = vx,
-            .tty = try vaxis.Tty.init(buf),
+            .tty = try vaxis.Tty.init(io, buf),
 
             .selected = 0,
             .selected_rows = .empty,
@@ -141,6 +141,7 @@ pub const State = struct {
 
     pub fn run(
         state: *State,
+        io: std.Io,
         haystacks: [][]const u8,
     ) !?[]const []const u8 {
         defer state.deinit();
@@ -157,20 +158,16 @@ pub const State = struct {
         const needles_buf = try state.allocator.alloc([]const u8, 16);
         var needles = splitQuery(needles_buf, state.query.slice());
 
-        var loop: vaxis.Loop(Event) = .{
-            .tty = &state.tty,
-            .vaxis = &state.vx,
-        };
-        try loop.init();
+        var loop: vaxis.Loop(Event) = .init(io, &state.tty, &state.vx);
 
         try loop.start();
         defer loop.stop();
 
-        if (state.preview) |*preview| try preview.startThread(&loop);
+        if (state.preview) |*preview| try preview.startThread(io, &loop);
 
         {
             // Get initial window size
-            const ws = try vaxis.Tty.getWinsize(state.tty.fd);
+            const ws = try state.tty.getWinsize();
             try state.vx.resize(state.allocator, state.tty.writer(), ws);
         }
 
@@ -191,7 +188,7 @@ pub const State = struct {
             if (state.selection_changed) if (state.preview) |*preview| {
                 state.selection_changed = false;
                 if (filtered.len > 0) {
-                    preview.spawn(filtered[state.selected + state.offset].str);
+                    preview.spawn(io, filtered[state.selected + state.offset].str);
                 } else preview.output = "";
             };
 
@@ -230,7 +227,7 @@ pub const State = struct {
     fn handleInput(state: *State, loop: *vaxis.Loop(Event), num_filtered: usize) !?Result {
         const old = state.*;
 
-        const event = loop.nextEvent();
+        const event = try loop.nextEvent();
         switch (event) {
             .key_press => |key| {
                 const visible_rows = @min(@min(state.config.height, state.vx.screen.height) - 1, num_filtered);
