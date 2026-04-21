@@ -1,5 +1,5 @@
 {
-  description = "libvaxis";
+  description = "zf";
   inputs = {
     nixpkgs = {
       url = "https://channels.nixos.org/nixos-unstable-small/nixexprs.tar.xz";
