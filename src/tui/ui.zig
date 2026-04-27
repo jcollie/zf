@@ -130,7 +130,9 @@ pub const State = struct {
         };
     }
 
-    fn deinit(state: *State) void {
+    fn deinit(state: *State, io: std.Io) void {
+        if (state.preview) |*preview| preview.deinit(io);
+
         // We must clear the window because we aren't using the alternate screen
         state.vx.window().clear();
         state.vx.render(state.tty.writer()) catch {};
@@ -144,7 +146,7 @@ pub const State = struct {
         io: std.Io,
         haystacks: [][]const u8,
     ) !?[]const []const u8 {
-        defer state.deinit();
+        defer state.deinit(io);
 
         var filtered = blk: {
             var filtered: ArrayList(Haystack) = try .initCapacity(state.allocator, haystacks.len);

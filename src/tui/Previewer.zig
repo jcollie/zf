@@ -56,6 +56,7 @@ pub fn startThread(previewer: *Previewer, io: std.Io, loop: *vaxis.Loop(Event)) 
     previewer.thread = try io.concurrent(threadLoop, .{ previewer, io, loop });
 }
 
+// TODO: can this be cleaned up?
 const ThreadLoopError = error{
     AccessDenied,
     AntivirusInterference,
@@ -154,14 +155,8 @@ pub fn run(gpa: std.mem.Allocator, io: std.Io, argv: []const []const u8) !std.pr
     const stderr_reader = multi_reader.reader(1);
 
     while (multi_reader.fill(64, .none)) |_| {
-        if (stdout_reader.buffered().len > 4 * 4096) {
-            child.kill(io);
-            break;
-        }
-        if (stderr_reader.buffered().len > 4 * 4096) {
-            child.kill(io);
-            break;
-        }
+        if (stdout_reader.buffered().len > 4 * 4096) break;
+        if (stderr_reader.buffered().len > 4 * 4096) break;
     } else |err| switch (err) {
         error.EndOfStream => {},
         else => |e| return e,
