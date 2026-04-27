@@ -269,7 +269,7 @@ pub const State = struct {
                     }
                     return .one;
                 } else if (key.matches(Key.escape, .{})) {
-                    return .none;
+                    return .cancel;
                 } else if (key.text) |text| {
                     try state.query.insert(state.allocator, text);
                 }
